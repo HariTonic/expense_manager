@@ -213,7 +213,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     _buildSectionCard(
                       child: ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Acquisition Date', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+                        title: const Text('Spending Date', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
                         subtitle: Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(_formatDate(_selectedDate), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500)),

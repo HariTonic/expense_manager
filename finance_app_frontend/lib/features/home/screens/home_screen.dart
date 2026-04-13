@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/expense_service.dart';
 import '../../../data/services/income_service.dart';
+import '../../../data/services/investment_service.dart';
 import '../../../data/models/expense_model.dart';
 import '../../../data/models/income_model.dart';
+import '../../../data/models/investment_model.dart';
 import '../../expense/screens/add_expense_screen.dart';
 import '../../income/screens/add_income_screen.dart';
+import '../../investment/screens/add_investment_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,9 +19,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ExpenseService _expenseService = ExpenseService();
   final IncomeService _incomeService = IncomeService();
+  final InvestmentService _investmentService = InvestmentService();
 
   List<Expense> expenses = [];
   List<Income> incomes = [];
+  List<Investment> investments = [];
 
   @override
   void initState() {
@@ -29,10 +34,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _loadData() {
     final expenseData = _expenseService.getExpenses();
     final incomeData = _incomeService.getIncomes();
+    final investmentData = _investmentService.getInvestments();
 
     setState(() {
       expenses = expenseData;
       incomes = incomeData;
+      investments = investmentData;
     });
   }
 
@@ -79,6 +86,17 @@ class _HomeScreenState extends State<HomeScreen> {
       };
     }));
 
+    combined.addAll(investments.map((investment) {
+      return {
+        'type': 'investment',
+        'title': investment.investmentName,
+        'subtitle': investment.type,
+        'amount': investment.totalInvestment,
+        'date': investment.date,
+        'currency': investment.currency,
+      };
+    }));
+
     combined.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
     return combined;
   }
@@ -98,6 +116,16 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => const AddIncomeScreen(),
+      ),
+    );
+    _loadData();
+  }
+
+  void _navigateToAddInvestment() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AddInvestmentScreen(),
       ),
     );
     _loadData();
@@ -270,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     title: 'Add Investment',
                     icon: Icons.trending_up,
                     color: Colors.purpleAccent,
-                    onTap: () => _showNotReadyMessage('Invest'),
+                    onTap: _navigateToAddInvestment,
                   ),
                 ],
               ),
@@ -312,13 +340,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     subtitle: item['subtitle'] as String,
                     amount: item['amount'] as double,
                     isIncome: isIncome,
+                    type: item['type'] as String,
+                    currency: item.containsKey('currency') ? item['currency'] as String : '₹',
                   );
                 },
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
                 children: [
                   Expanded(
@@ -329,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.white24),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -344,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: const Text('Quick Entry', style: TextStyle(color: Color(0xFF151B35))),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF7F83FF),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -371,7 +401,7 @@ Widget _smallActionCard({
     child: GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 100,
+        height: 70,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: const Color(0xFF11182F),
@@ -406,7 +436,13 @@ Widget _transactionTile({
   required String subtitle,
   required double amount,
   required bool isIncome,
+  required String type,
+  required String currency,
 }) {
+  final iconData = type == 'investment' ? Icons.trending_up : (isIncome ? Icons.download : Icons.shopping_bag_outlined);
+  final iconColor = type == 'investment' ? Colors.purpleAccent : (isIncome ? Colors.greenAccent : Colors.redAccent);
+  final amountSign = type == 'expense' ? '-' : '+';
+
   return Container(
     margin: const EdgeInsets.only(bottom: 12),
     padding: const EdgeInsets.all(16),
@@ -420,12 +456,12 @@ Widget _transactionTile({
           height: 50,
           width: 50,
           decoration: BoxDecoration(
-            color: isIncome ? Colors.greenAccent.withAlpha(46) : Colors.redAccent.withAlpha(46),
+            color: iconColor.withAlpha(46),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Icon(
-            isIncome ? Icons.download : Icons.shopping_bag_outlined,
-            color: isIncome ? Colors.greenAccent : Colors.redAccent,
+            iconData,
+            color: iconColor,
           ),
         ),
         const SizedBox(width: 14),
@@ -446,9 +482,9 @@ Widget _transactionTile({
           ),
         ),
         Text(
-          '${isIncome ? '+' : '-'}₹${amount.toStringAsFixed(2)}',
+          '$amountSign$currency${amount.toStringAsFixed(2)}',
           style: TextStyle(
-            color: isIncome ? Colors.greenAccent : Colors.redAccent,
+            color: iconColor,
             fontWeight: FontWeight.bold,
           ),
         ),
