@@ -1,35 +1,37 @@
 class Income {
   String id;
+  String source;
   double amount;
-  String category;
-  String? note;
   DateTime date;
+  String? note;
 
   Income({
     required this.id,
+    required this.source,
     required this.amount,
-    required this.category,
-    this.note,
     required this.date,
+    this.note,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'source': source,
       'amount': amount,
-      'category': category,
-      'note': note,
       'date': date.toIso8601String(),
+      'note': note,
     };
   }
 
   factory Income.fromMap(Map<dynamic, dynamic> map) {
     return Income(
       id: map['id'],
-      amount: map['amount'],
-      category: map['category'],
-      note: map['note'],
+      source: map['source'] ?? 'Income',
+      amount: (map['amount'] is int)
+          ? (map['amount'] as int).toDouble()
+          : map['amount'] as double,
       date: DateTime.parse(map['date']),
+      note: map['note'],
     );
   }
 }
